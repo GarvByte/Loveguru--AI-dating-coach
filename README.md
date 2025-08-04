@@ -1,16 +1,7 @@
-# loveguru
+# Loveguru: AI Dating Coach
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1- Ask any question about dating.
+2- Uplaod screenshots of chat and get friendzone score.
+3- Screenshots are deleted, no screenshots are stored on the database.
+4- Authentication is needed to enter the app.
+5- AI chats are stored on our database.
