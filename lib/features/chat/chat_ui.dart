@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loveguru/config/theme/app_colors.dart';
+import 'package:loveguru/config/theme/constants.dart';
 import 'package:loveguru/models/chatbotProvider_model/chatbot_provider_model.dart';
 import 'package:loveguru/models/supabaseProvider_model/supabase_provider_model.dart';
 import 'package:loveguru/features/chat/chatbox.dart';
@@ -21,7 +22,7 @@ class _ChatUiState extends ConsumerState<ChatUi> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref.read(supabaseprovider.notifier).getChatsFromSupabase(ref);
+      ref.read(supabaseprovider.notifier).getChatsFromSupabase();
     });
 
     _scrollController.addListener(() {
@@ -47,12 +48,14 @@ class _ChatUiState extends ConsumerState<ChatUi> {
 
   @override
   Widget build(BuildContext context) {
-    final chatbot = ref.watch(chatbotprovider.notifier);
+    final chatbot = ref.watch(chatbotprovider);
+    final chatbotFunctions = ref.read(chatbotprovider.notifier);
 
     return Scaffold(
-      
       appBar: AppBar(
-        title: Text("LOVEGURU"),
+        title: chatbot.error == false
+            ? Text("LOVEGURU")
+            : Text(chatbot.errorName),
 
         centerTitle: true,
         backgroundColor: AppColors.secondary,
@@ -66,7 +69,7 @@ class _ChatUiState extends ConsumerState<ChatUi> {
             bottom: 80,
             right: 20,
             child: StreamBuilder(
-              stream: chatbot.messageStream.stream,
+              stream: chatbotFunctions.messageStream.stream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData || snapshot.data == null) {
                   return const Center(child: CircularProgressIndicator());

@@ -1,5 +1,5 @@
 const ChatmodelAPIkey =
-    "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";
+    "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";
 const ocrAPikey = "K86683627488957";
 const avatar = [
   "assets/cat.png",
@@ -8,4 +8,5 @@ const avatar = [
   "assets/sloth.png",
   "assets/unicorn.png",
 ];
+// bool error = false;
 String currentUser = "";

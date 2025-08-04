@@ -3,38 +3,50 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:loveguru/config/theme/constants.dart';
 import 'package:http/http.dart' as http;
+import 'package:loveguru/config/theme/chatbot_variable.dart';
 import 'package:loveguru/models/supabaseProvider_model/supabase_provider_model.dart';
 
-class ChatbotProviderModel extends Notifier<String> {
+class ChatbotProviderModel extends Notifier<ChatbotVariable> {
   @override
-  String build() => "";
+  ChatbotVariable build() {
+    return ChatbotVariable(
+      allMessages: [],
+      textStream: "",
+      streamingChats: [],
+      errorName: "",
+      error: false,
+      previousReplies: "",
+    );
+    // List<Map> allMessages = [];
+    // String textStream = "";
+    // List<Map> streamingChats = [];
+    // String errorName = "";
+    // bool error = false;
+    // String previousReplies = "";
+  }
 
-  List<Map> allMessages = [];
   StreamController<List> messageStream = StreamController.broadcast();
-  String textStream = "";
-  List<Map> streamingChats = [];
-  String previousReplies = "";
-
   void loadAllMessages() {
-    messageStream.add(allMessages);
+    messageStream.add(state.allMessages);
     addPreviousMessage();
   }
 
   void addPreviousMessage() {
-    final messages = allMessages.reversed.toList();
+    final messages = state.allMessages.reversed.toList();
     print("entered fiucntion");
     for (var i = messages.length <= 10 ? messages.length - 1 : 10; i > 0; i--) {
       print("enetered previous messages");
-      previousReplies += messages[i]["bot_reply"];
+      state.previousReplies += messages[i]["bot_reply"];
     }
-    print("previoyus repoy = $previousReplies");
+    // print("previoyus repoy = $previousReplies");
 
     // print("messages = $messages");
   }
 
   Future<void> sendAndGetResultFromChatbot(String text, WidgetRef ref) async {
-    textStream = "";
-    streamingChats.clear();
+    state.error = false;
+    state.textStream = "";
+    state.streamingChats.clear();
 
     print("ebeterd chatboit");
 
@@ -56,49 +68,65 @@ class ChatbotProviderModel extends Notifier<String> {
         {
           "role": "user",
           "content":
-              "Previous Replies of you and me are $previousReplies and current one is $text",
+              "Previous Replies of you and me are ${state.previousReplies} and current one is $text",
         },
       ],
       "stream": true,
     };
 
     try {
+      print("entered try");
       final request = http.Request('POST', Uri.parse(url));
       request.headers.addAll(headers);
       request.body = jsonEncode(body);
       final streamResponse = await request.send();
-      streamResponse.stream
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((line) async {
-            if (line.startsWith("data")) {
-              final jsonPart = line.substring(6).trim();
-              if (jsonPart == "[DONE]") {
-                print("stream finished message recieved");
-                state = textStream;
-                ref
-                    .read(supabaseprovider.notifier)
-                    .uploadChatsToSupabase(state, ref, false);
-                return;
-              }
-              final body = jsonDecode(jsonPart);
-              textStream += body['choices'][0]['delta']['content'];
-              final combined = [
-                ...allMessages,
-                // ✅ Previous chats
-                {"bot_reply": textStream}, // ✅ Current streamed message
-              ];
+      print("textstrea222n = ${state.textStream}");
+      print("request statuys = ${streamResponse.statusCode}");
+      // print("Response body: ${streamResponse.stream.bytesToString()}");
+      if (streamResponse.statusCode == 200) {
+        streamResponse.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter())
+            .listen((line) async {
+              if (line.startsWith("data")) {
+                final jsonPart = line.substring(6).trim();
+                print("json part $jsonPart");
+                if (jsonPart == "[DONE]") {
+                  print("stream finished message recieved");
+                  // state = textStream;
+                  ref
+                      .read(supabaseprovider.notifier)
+                      .uploadChatsToSupabase(state.textStream, ref, false);
+                  return;
+                }
+                final body = jsonDecode(jsonPart);
+                state.textStream += body['choices'][0]['delta']['content'];
+                print("textstrean = ${state.textStream}");
+                final combined = [
+                  ...state.allMessages,
+                  // ✅ Previous chats
+                  {"bot_reply": state.textStream}, // ✅ Current streamed message
+                ];
 
-              messageStream.add(combined);
-              await Future.delayed(const Duration(milliseconds: 50));
-            }
-          });
+                messageStream.add(combined);
+                await Future.delayed(const Duration(milliseconds: 50));
+              }
+            });
+      } else {
+        print("status code = ${streamResponse.statusCode}");
+        state = state.copyWith(error: true, errorName: "401");
+        // state = errorName;
+
+        return;
+      }
     } catch (e) {
       print("error in stream $e");
     }
   }
 }
 
-final chatbotprovider = NotifierProvider<ChatbotProviderModel, String>(() {
-  return ChatbotProviderModel();
-});
+final chatbotprovider = NotifierProvider<ChatbotProviderModel, ChatbotVariable>(
+  () {
+    return ChatbotProviderModel();
+  },
+);

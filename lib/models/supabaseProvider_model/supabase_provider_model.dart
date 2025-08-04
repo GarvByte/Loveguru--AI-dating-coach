@@ -73,13 +73,13 @@ class SupabaseProviderModel extends Notifier<List<Map<dynamic, dynamic>>> {
       });
 
       print("uploaded chats to supabase successfully");
-      getChatsFromSupabase(ref);
+      getChatsFromSupabase();
     } catch (e) {
       print("error in uploadingchats = $e");
     }
   }
 
-  Future<void> getChatsFromSupabase(WidgetRef ref) async {
+  Future<void> getChatsFromSupabase() async {
     print("entered getchatsfrom supabase");
     final uid = supabase.auth.currentUser!.id;
     try {
@@ -90,7 +90,8 @@ class SupabaseProviderModel extends Notifier<List<Map<dynamic, dynamic>>> {
           .order("created_at", ascending: true);
       chats = getchats;
       state = chats;
-      ref.read(chatbotprovider.notifier).allMessages = state;
+      ref.read(chatbotprovider).allMessages = state;
+      
       ref.read(chatbotprovider.notifier).loadAllMessages();
     } catch (e) {
       print("error fetching chats from supabase = $e");
