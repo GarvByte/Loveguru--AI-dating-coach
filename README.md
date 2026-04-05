@@ -5,3 +5,5 @@
 3- Screenshots are deleted, no screenshots are stored on the database.
 4- Authentication is needed to enter the app.
 5- AI chats are stored on our database.
+
+<img width="1280" height="720" alt="5" src="https://github.com/user-attachments/assets/bb9ccaba-5e15-49a2-957c-ab0154100375" />
